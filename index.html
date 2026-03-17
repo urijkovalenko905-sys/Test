@@ -6,25 +6,21 @@
     <title>Учебный Хаб 9В</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* ── Переменные ── */
         :root {
-            --bg:           #0d1117;
-            --surface:      #161b22;
-            --surface-2:    #1c2128;
-            --border:       #30363d;
-            --green:        #00ff66;
-            --green-dim:    rgba(0,255,102,.12);
-            --green-glow:   rgba(0,255,102,.25);
-            --text:         #c9d1d9;
-            --muted:        #8b949e;
-            --red:          #ff4757;
-            --yellow:       #ffd32a;
-            --radius:       12px;
+            --bg:         #0d1117;
+            --surface:    #161b22;
+            --surface-2:  #1c2128;
+            --border:     #30363d;
+            --green:      #00ff66;
+            --green-dim:  rgba(0,255,102,.12);
+            --green-glow: rgba(0,255,102,.25);
+            --text:       #c9d1d9;
+            --muted:      #8b949e;
+            --red:        #ff4757;
+            --yellow:     #ffd32a;
+            --radius:     12px;
         }
-
-        /* ── Сброс и база ── */
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
         body {
             background: var(--bg);
             color: var(--text);
@@ -33,690 +29,486 @@
             overflow-x: hidden;
         }
 
-        /* ── Шапка ── */
-        .header {
-            position: sticky;
-            top: 0;
-            z-index: 100;
+        /* ══════════════════════════════════
+           LOADER
+        ══════════════════════════════════ */
+        #loader {
+            position: fixed; inset: 0; z-index: 9999;
             background: var(--bg);
-            border-bottom: 1px solid var(--border);
-            padding: 14px 20px 12px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 26px;
+            transition: opacity .5s ease, visibility .5s ease;
         }
+        #loader.hidden { opacity: 0; visibility: hidden; }
 
-        .header-logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        /* Вращающиеся кольца */
+        .loader-logo { position: relative; width: 90px; height: 90px; }
+        .loader-ring {
+            position: absolute; inset: 0; border-radius: 50%;
+            border: 2px solid transparent;
+            border-top-color: var(--green);
+            border-right-color: rgba(0,255,102,.25);
+            animation: spin 1.1s linear infinite;
         }
-
-        .logo-icon {
-            width: 34px; height: 34px;
-            background: var(--green-dim);
-            border: 1px solid var(--green);
-            border-radius: 8px;
+        .loader-ring-2 {
+            position: absolute; inset: 9px; border-radius: 50%;
+            border: 1px solid transparent;
+            border-bottom-color: var(--green);
+            border-left-color: rgba(0,255,102,.2);
+            animation: spin 1.9s linear infinite reverse;
+        }
+        .loader-icon {
+            position: absolute; inset: 0;
             display: flex; align-items: center; justify-content: center;
-            font-size: 18px;
-            box-shadow: 0 0 10px var(--green-glow);
+            font-size: 32px;
+            animation: pulse-icon 2s ease-in-out infinite;
+        }
+        .loader-glow {
+            position: absolute; bottom: -10px; left: 50%;
+            transform: translateX(-50%);
+            width: 60px; height: 20px;
+            background: var(--green); border-radius: 50%;
+            filter: blur(14px); opacity: .4;
+            animation: glow-pulse 2s ease-in-out infinite;
         }
 
-        .logo-text {
-            font-size: 16px;
-            font-weight: 700;
-            color: #fff;
-            letter-spacing: .5px;
+        /* Заголовок */
+        .loader-title {
+            font-size: 22px; font-weight: 800; color: #fff;
+            letter-spacing: 1.5px; text-transform: uppercase;
+            text-shadow: 0 0 18px var(--green-glow);
+        }
+        .loader-sub {
+            font-size: 13px; color: var(--muted);
+            letter-spacing: .5px; margin-top: -18px;
         }
 
-        .logo-sub {
-            font-size: 11px;
-            color: var(--green);
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
+        /* Прогресс */
+        .loader-progress-wrap {
+            width: 210px; display: flex; flex-direction: column;
+            align-items: center; gap: 8px;
+        }
+        .loader-track {
+            width: 100%; height: 3px;
+            background: var(--surface-2); border-radius: 99px; overflow: hidden;
+        }
+        .loader-fill {
+            height: 100%; width: 0%;
+            background: linear-gradient(90deg,#00cc55,var(--green));
+            border-radius: 99px; box-shadow: 0 0 8px var(--green);
+            transition: width .3s ease;
+        }
+        .loader-status {
+            font-size: 12px; color: var(--muted);
+            letter-spacing: .4px; min-height: 16px;
+        }
+        .loader-dots::after {
+            content:'';
+            animation: dots 1.2s steps(4,end) infinite;
         }
 
+        /* Частицы */
+        .particle {
+            position: fixed; width: 3px; height: 3px;
+            background: var(--green); border-radius: 50%; opacity: 0;
+        }
+        .p1{top:12%;left:18%} .p2{top:22%;right:16%} .p3{bottom:18%;left:22%}
+        .p4{bottom:28%;right:20%} .p5{top:48%;left:7%} .p6{top:58%;right:9%}
+        .p7{top:8%;left:52%} .p8{bottom:8%;left:57%}
+        .particle:nth-child(odd)  { animation: float1 3.8s ease-in-out infinite; }
+        .particle:nth-child(even) { animation: float2 4.2s ease-in-out infinite .6s; }
+
+        /* ── keyframes ── */
+        @keyframes spin       { to{transform:rotate(360deg)} }
+        @keyframes pulse-icon { 0%,100%{transform:scale(1);filter:drop-shadow(0 0 0 var(--green))} 50%{transform:scale(1.08);filter:drop-shadow(0 0 6px var(--green))} }
+        @keyframes glow-pulse { 0%,100%{opacity:.3;width:50px} 50%{opacity:.6;width:70px} }
+        @keyframes dots       { 0%{content:''} 25%{content:'.'} 50%{content:'..'} 75%{content:'...'} 100%{content:''} }
+        @keyframes float1     { 0%,100%{transform:translateY(0) scale(1);opacity:0} 20%{opacity:.6} 50%{transform:translateY(-20px) scale(1.4);opacity:.8} 80%{opacity:.3} }
+        @keyframes float2     { 0%,100%{transform:translateY(0) scale(1);opacity:0} 20%{opacity:.5} 50%{transform:translateY(16px) scale(1.2);opacity:.7} 80%{opacity:.2} }
+
+        /* ══════════════════════════════════
+           APP
+        ══════════════════════════════════ */
+        #app { opacity: 0; transition: opacity .5s ease; }
+        #app.visible { opacity: 1; }
+
+        /* Шапка */
+        .header {
+            position: sticky; top: 0; z-index: 100;
+            background: var(--bg); border-bottom: 1px solid var(--border);
+            padding: 14px 20px 12px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .header-logo { display: flex; align-items: center; gap: 10px; }
+        .logo-icon {
+            width: 34px; height: 34px; background: var(--green-dim);
+            border: 1px solid var(--green); border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; box-shadow: 0 0 10px var(--green-glow);
+        }
+        .logo-text { font-size: 16px; font-weight: 700; color: #fff; letter-spacing: .5px; }
+        .logo-sub  { font-size: 11px; color: var(--green); letter-spacing: 1.5px; text-transform: uppercase; }
         .header-badge {
-            background: var(--green-dim);
-            border: 1px solid var(--green);
-            color: var(--green);
-            font-size: 11px;
-            font-weight: 600;
-            padding: 4px 10px;
-            border-radius: 20px;
-            letter-spacing: .5px;
+            background: var(--green-dim); border: 1px solid var(--green);
+            color: var(--green); font-size: 11px; font-weight: 600;
+            padding: 4px 10px; border-radius: 20px; letter-spacing: .5px;
         }
 
-        /* ── Навигация-табы ── */
+        /* Табы */
         .tabs {
-            display: flex;
-            gap: 6px;
-            padding: 14px 16px 0;
+            display: flex; gap: 6px; padding: 14px 16px 0;
             border-bottom: 1px solid var(--border);
-            overflow-x: auto;
-            scrollbar-width: none;
+            overflow-x: auto; scrollbar-width: none;
         }
         .tabs::-webkit-scrollbar { display: none; }
-
         .tab {
-            flex-shrink: 0;
-            padding: 8px 16px;
-            border-radius: 8px 8px 0 0;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--muted);
-            cursor: pointer;
-            border: 1px solid transparent;
-            border-bottom: none;
-            transition: all .2s;
+            flex-shrink: 0; padding: 8px 16px; border-radius: 8px 8px 0 0;
+            font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer;
+            border: 1px solid transparent; border-bottom: none; transition: all .2s;
         }
         .tab.active {
-            color: var(--green);
-            background: var(--surface);
-            border-color: var(--border);
-            border-bottom-color: var(--surface);
+            color: var(--green); background: var(--surface);
+            border-color: var(--border); border-bottom-color: var(--surface);
             margin-bottom: -1px;
         }
 
-        /* ── Контент ── */
-        .content {
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
+        /* Контент */
+        .content { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
         .page { display: none; }
         .page.active { display: flex; flex-direction: column; gap: 12px; }
 
-        /* ── Карточки ── */
+        /* Карточки */
         .card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 14px;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 14px;
             transition: border-color .2s, transform .15s, box-shadow .2s;
         }
-        .card:active {
-            transform: scale(.98);
-            border-color: var(--green);
-            box-shadow: 0 0 16px var(--green-glow);
-        }
-        .card-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .card-title {
-            font-size: 14px;
-            font-weight: 700;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .card-body {
-            font-size: 13px;
-            color: var(--muted);
-            margin-top: 6px;
-            line-height: 1.5;
-        }
+        .card:active { transform: scale(.98); border-color: var(--green); box-shadow: 0 0 16px var(--green-glow); }
+        .card-row   { display: flex; align-items: center; justify-content: space-between; }
+        .card-title { font-size: 14px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
+        .card-body  { font-size: 13px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
 
-        /* ── Значки ── */
-        .badge {
-            font-size: 11px;
-            font-weight: 700;
-            padding: 3px 8px;
-            border-radius: 20px;
-        }
+        .badge        { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 20px; }
         .badge-green  { background: var(--green-dim); color: var(--green); }
         .badge-red    { background: rgba(255,71,87,.12); color: var(--red); }
         .badge-yellow { background: rgba(255,211,42,.12); color: var(--yellow); }
 
-        /* ── Расписание ── */
-        .schedule-day {
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--green);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            padding: 8px 0 4px;
+        .section-title {
+            font-size: 12px; font-weight: 700; color: var(--muted);
+            text-transform: uppercase; letter-spacing: 1.5px; padding: 4px 0 2px;
         }
 
+        /* Расписание */
         .lesson {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            padding: 10px 0;
-            border-bottom: 1px solid var(--border);
+            display: flex; align-items: flex-start; gap: 12px;
+            padding: 10px 0; border-bottom: 1px solid var(--border);
         }
         .lesson:last-child { border-bottom: none; }
-
         .lesson-num {
-            width: 26px; height: 26px;
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--muted);
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
+            width: 26px; height: 26px; background: var(--surface-2);
+            border: 1px solid var(--border); border-radius: 6px;
+            font-size: 12px; font-weight: 700; color: var(--muted);
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
-        .lesson.current .lesson-num {
-            background: var(--green-dim);
-            border-color: var(--green);
-            color: var(--green);
-        }
-
+        .lesson.current .lesson-num  { background: var(--green-dim); border-color: var(--green); color: var(--green); }
         .lesson-info { flex: 1; min-width: 0; }
-        .lesson-name {
-            font-size: 14px;
-            font-weight: 600;
-            color: #fff;
-        }
+        .lesson-name { font-size: 14px; font-weight: 600; color: #fff; }
         .lesson.current .lesson-name { color: var(--green); }
-        .lesson-meta {
-            font-size: 12px;
-            color: var(--muted);
-            margin-top: 2px;
-        }
+        .lesson-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
-        /* ── Таймер ── */
+        /* Таймер */
         .timer-block {
-            background: var(--surface);
-            border: 1px solid var(--green);
-            border-radius: var(--radius);
-            padding: 20px;
-            text-align: center;
+            background: var(--surface); border: 1px solid var(--green);
+            border-radius: var(--radius); padding: 20px; text-align: center;
             box-shadow: 0 0 20px var(--green-glow);
         }
-        .timer-title {
-            font-size: 12px;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin-bottom: 12px;
-        }
-        .timer-digits {
-            display: flex;
-            justify-content: center;
-            gap: 6px;
-        }
-        .timer-unit {
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 8px 12px;
-            min-width: 56px;
-        }
-        .timer-num {
-            font-size: 28px;
-            font-weight: 700;
-            color: var(--green);
-            font-variant-numeric: tabular-nums;
-            line-height: 1;
-            text-shadow: 0 0 8px var(--green);
-        }
-        .timer-label {
-            font-size: 10px;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 4px;
-        }
-        .timer-sep {
-            font-size: 24px;
-            color: var(--green);
-            font-weight: 700;
-            align-self: center;
-            margin-top: -4px;
-        }
+        .timer-title  { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; }
+        .timer-digits { display: flex; justify-content: center; gap: 6px; }
+        .timer-unit   { background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; min-width: 56px; }
+        .timer-num    { font-size: 28px; font-weight: 700; color: var(--green); font-variant-numeric: tabular-nums; line-height: 1; text-shadow: 0 0 8px var(--green); }
+        .timer-label  { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+        .timer-sep    { font-size: 24px; color: var(--green); font-weight: 700; align-self: center; margin-top: -4px; }
 
-        /* ── Прогресс бар ── */
-        .progress-wrap { margin: 4px 0; }
-        .progress-label {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            color: var(--muted);
-            margin-bottom: 5px;
-        }
-        .progress-track {
-            height: 6px;
-            background: var(--surface-2);
-            border-radius: 99px;
-            overflow: hidden;
-        }
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #00cc55, var(--green));
-            border-radius: 99px;
-            box-shadow: 0 0 6px var(--green);
-            transition: width .6s ease;
-        }
+        /* Прогресс */
+        .progress-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+        .progress-track { height: 6px; background: var(--surface-2); border-radius: 99px; overflow: hidden; }
+        .progress-fill  { height: 100%; background: linear-gradient(90deg,#00cc55,var(--green)); border-radius: 99px; box-shadow: 0 0 6px var(--green); transition: width .6s ease; }
 
-        /* ── Кнопки ── */
-        .btn {
-            border: none;
-            border-radius: 8px;
-            padding: 12px 16px;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all .2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        .btn:active { transform: scale(.97); }
-        .btn-primary {
-            background: var(--green);
-            color: #000;
-            width: 100%;
-            box-shadow: 0 0 12px var(--green-glow);
-        }
-        .btn-outline {
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--text);
-            width: 100%;
-        }
-        .btn-outline:hover { border-color: var(--green); color: var(--green); }
+        /* Кнопки */
+        .btn          { border: none; border-radius: 8px; padding: 12px 16px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all .2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn:active   { transform: scale(.97); }
+        .btn-primary  { background: var(--green); color: #000; width: 100%; box-shadow: 0 0 12px var(--green-glow); }
+        .btn-outline  { background: transparent; border: 1px solid var(--border); color: var(--text); width: 100%; }
 
-        /* ── Список фактов ── */
-        .fact-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-left: 3px solid var(--green);
-            border-radius: var(--radius);
-            padding: 14px;
-        }
-        .fact-subject {
-            font-size: 11px;
-            color: var(--green);
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 6px;
-        }
-        .fact-text {
-            font-size: 14px;
-            line-height: 1.6;
-        }
+        /* Факты */
+        .fact-card    { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--green); border-radius: var(--radius); padding: 14px; }
+        .fact-subject { font-size: 11px; color: var(--green); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+        .fact-text    { font-size: 14px; line-height: 1.6; }
 
-        /* ── Сетка предметов ОГЭ ── */
-        .subjects-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
+        /* Предметы */
+        .subjects-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .subject-btn {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 14px 10px;
-            text-align: center;
-            cursor: pointer;
-            transition: all .2s;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text);
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 14px 10px; text-align: center;
+            cursor: pointer; transition: all .2s; font-size: 13px; font-weight: 600; color: var(--text);
         }
-        .subject-btn:active {
-            border-color: var(--green);
-            color: var(--green);
-            box-shadow: 0 0 10px var(--green-glow);
-        }
+        .subject-btn:active { border-color: var(--green); color: var(--green); box-shadow: 0 0 10px var(--green-glow); }
         .subject-btn .sub-icon { font-size: 22px; display: block; margin-bottom: 4px; }
-
-        /* ── Пользователь ── */
-        .user-block {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 16px;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-        .user-avatar {
-            width: 48px; height: 48px;
-            background: var(--green-dim);
-            border: 2px solid var(--green);
-            border-radius: 50%;
-            font-size: 22px;
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
-        }
-        .user-name { font-size: 16px; font-weight: 700; color: #fff; }
-        .user-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
-
-        /* ── Скролл-подсказка ── */
-        .section-title {
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            padding: 4px 0 2px;
-        }
     </style>
 </head>
 <body>
 
-<!-- Шапка -->
-<header class="header">
-    <div class="header-logo">
-        <div class="logo-icon">🖥</div>
-        <div>
-            <div class="logo-text">Учебный Хаб</div>
-            <div class="logo-sub">9В · 2025–2026</div>
+<!-- ══ LOADER ══ -->
+<div id="loader">
+    <div class="particle p1"></div>
+    <div class="particle p2"></div>
+    <div class="particle p3"></div>
+    <div class="particle p4"></div>
+    <div class="particle p5"></div>
+    <div class="particle p6"></div>
+    <div class="particle p7"></div>
+    <div class="particle p8"></div>
+
+    <div class="loader-logo">
+        <div class="loader-ring"></div>
+        <div class="loader-ring-2"></div>
+        <div class="loader-icon">🖥</div>
+        <div class="loader-glow"></div>
+    </div>
+
+    <div class="loader-title">Учебный Хаб</div>
+    <div class="loader-sub">9В · 2025–2026</div>
+
+    <div class="loader-progress-wrap">
+        <div class="loader-track">
+            <div class="loader-fill" id="loaderFill"></div>
+        </div>
+        <div class="loader-status" id="loaderStatus">
+            <span class="loader-dots">Инициализация</span>
         </div>
     </div>
-    <div class="header-badge" id="userBadge">...</div>
-</header>
-
-<!-- Табы -->
-<div class="tabs">
-    <div class="tab active" onclick="switchTab('schedule')">📅 Расписание</div>
-    <div class="tab" onclick="switchTab('oge')">📚 ОГЭ 2026</div>
-    <div class="tab" onclick="switchTab('timer')">⏳ Таймер</div>
-    <div class="tab" onclick="switchTab('facts')">💡 Факты</div>
 </div>
 
-<!-- Контент -->
-<div class="content">
-
-    <!-- ───── РАСПИСАНИЕ ───── -->
-    <div id="page-schedule" class="page active">
-        <div class="section-title" id="todayLabel">Сегодня, пн</div>
-        <div class="card" id="lessonsContainer"></div>
-        <button class="btn btn-outline" onclick="tg.sendData('action_full_schedule')">
-            📋 Полное расписание на неделю
-        </button>
-    </div>
-
-    <!-- ───── ОГЭ ───── -->
-    <div id="page-oge" class="page">
-        <div class="section-title">Выбери предмет</div>
-        <div class="subjects-grid">
-            <div class="subject-btn" onclick="tg.sendData('oge_math')">
-                <span class="sub-icon">📐</span>Математика
-            </div>
-            <div class="subject-btn" onclick="tg.sendData('oge_rus')">
-                <span class="sub-icon">✍️</span>Русский
-            </div>
-            <div class="subject-btn" onclick="tg.sendData('oge_social')">
-                <span class="sub-icon">🌍</span>Общество
-            </div>
-            <div class="subject-btn" onclick="tg.sendData('oge_eng')">
-                <span class="sub-icon">🇬🇧</span>Английский
-            </div>
-            <div class="subject-btn" onclick="tg.sendData('oge_inform')">
-                <span class="sub-icon">💻</span>Информатика
-            </div>
-            <div class="subject-btn" onclick="tg.sendData('oge_bio')">
-                <span class="sub-icon">🧬</span>Биология
-            </div>
-            <div class="subject-btn" onclick="tg.sendData('oge_history')">
-                <span class="sub-icon">📜</span>История
-            </div>
-            <div class="subject-btn" onclick="tg.sendData('oge_phys')">
-                <span class="sub-icon">⚛️</span>Физика
+<!-- ══ APP ══ -->
+<div id="app">
+    <header class="header">
+        <div class="header-logo">
+            <div class="logo-icon">🖥</div>
+            <div>
+                <div class="logo-text">Учебный Хаб</div>
+                <div class="logo-sub">9В · 2025–2026</div>
             </div>
         </div>
-        <div class="section-title" style="margin-top:4px;">Ближайшие экзамены</div>
-        <div id="examsList"></div>
+        <div class="header-badge" id="userBadge">...</div>
+    </header>
+
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('schedule')">📅 Расписание</div>
+        <div class="tab"        onclick="switchTab('oge')">📚 ОГЭ 2026</div>
+        <div class="tab"        onclick="switchTab('timer')">⏳ Таймер</div>
+        <div class="tab"        onclick="switchTab('facts')">💡 Факты</div>
     </div>
 
-    <!-- ───── ТАЙМЕР ───── -->
-    <div id="page-timer" class="page">
-        <div class="timer-block">
-            <div class="timer-title">До первого экзамена ОГЭ</div>
-            <div class="timer-digits">
-                <div class="timer-unit">
-                    <div class="timer-num" id="tDays">--</div>
-                    <div class="timer-label">дней</div>
-                </div>
-                <div class="timer-sep">:</div>
-                <div class="timer-unit">
-                    <div class="timer-num" id="tHours">--</div>
-                    <div class="timer-label">часов</div>
-                </div>
-                <div class="timer-sep">:</div>
-                <div class="timer-unit">
-                    <div class="timer-num" id="tMins">--</div>
-                    <div class="timer-label">минут</div>
-                </div>
-                <div class="timer-sep">:</div>
-                <div class="timer-unit">
-                    <div class="timer-num" id="tSecs">--</div>
-                    <div class="timer-label">секунд</div>
+    <div class="content">
+
+        <!-- РАСПИСАНИЕ -->
+        <div id="page-schedule" class="page active">
+            <div class="section-title" id="todayLabel">Сегодня</div>
+            <div class="card" id="lessonsContainer"></div>
+            <button class="btn btn-outline" onclick="tg.sendData('action_full_schedule')">
+                📋 Полное расписание на неделю
+            </button>
+        </div>
+
+        <!-- ОГЭ -->
+        <div id="page-oge" class="page">
+            <div class="section-title">Выбери предмет</div>
+            <div class="subjects-grid">
+                <div class="subject-btn" onclick="tg.sendData('oge_math')">   <span class="sub-icon">📐</span>Математика</div>
+                <div class="subject-btn" onclick="tg.sendData('oge_rus')">    <span class="sub-icon">✍️</span>Русский</div>
+                <div class="subject-btn" onclick="tg.sendData('oge_social')"> <span class="sub-icon">🌍</span>Общество</div>
+                <div class="subject-btn" onclick="tg.sendData('oge_eng')">    <span class="sub-icon">🇬🇧</span>Английский</div>
+                <div class="subject-btn" onclick="tg.sendData('oge_inform')"> <span class="sub-icon">💻</span>Информатика</div>
+                <div class="subject-btn" onclick="tg.sendData('oge_bio')">    <span class="sub-icon">🧬</span>Биология</div>
+                <div class="subject-btn" onclick="tg.sendData('oge_history')"><span class="sub-icon">📜</span>История</div>
+                <div class="subject-btn" onclick="tg.sendData('oge_phys')">   <span class="sub-icon">⚛️</span>Физика</div>
+            </div>
+            <div class="section-title" style="margin-top:4px">Ближайшие экзамены</div>
+            <div id="examsList"></div>
+        </div>
+
+        <!-- ТАЙМЕР -->
+        <div id="page-timer" class="page">
+            <div class="timer-block">
+                <div class="timer-title">До первого экзамена ОГЭ</div>
+                <div class="timer-digits">
+                    <div class="timer-unit"><div class="timer-num" id="tDays">--</div><div class="timer-label">дней</div></div>
+                    <div class="timer-sep">:</div>
+                    <div class="timer-unit"><div class="timer-num" id="tHours">--</div><div class="timer-label">часов</div></div>
+                    <div class="timer-sep">:</div>
+                    <div class="timer-unit"><div class="timer-num" id="tMins">--</div><div class="timer-label">минут</div></div>
+                    <div class="timer-sep">:</div>
+                    <div class="timer-unit"><div class="timer-num" id="tSecs">--</div><div class="timer-label">секунд</div></div>
                 </div>
             </div>
+            <div class="section-title">Прогресс подготовки</div>
+            <div class="card" id="progressCards"></div>
         </div>
-        <div class="section-title">Прогресс подготовки по предметам</div>
-        <div class="card" id="progressCards"></div>
-    </div>
 
-    <!-- ───── ФАКТЫ ───── -->
-    <div id="page-facts" class="page">
-        <div class="fact-card" id="factDisplay">
-            <div class="fact-subject">💡 Загрузка факта...</div>
-            <div class="fact-text"></div>
+        <!-- ФАКТЫ -->
+        <div id="page-facts" class="page">
+            <div class="fact-card" id="factDisplay">
+                <div class="fact-subject">💡 Факт дня</div>
+                <div class="fact-text"></div>
+            </div>
+            <button class="btn btn-primary" onclick="showNextFact()">🔄 Следующий факт</button>
+            <button class="btn btn-outline" onclick="tg.sendData('ask_ai_prompt')">🤖 Спросить AI-ассистента</button>
         </div>
-        <button class="btn btn-primary" onclick="showNextFact()">
-            🔄 Следующий факт
-        </button>
-        <button class="btn btn-outline" onclick="tg.sendData('ask_ai_prompt')">
-            🤖 Спросить AI-ассистента
-        </button>
-    </div>
 
+    </div>
 </div>
 
 <script>
-// ── Инициализация Telegram Web App ──
+/* ── Telegram ── */
 const tg = window.Telegram.WebApp;
 tg.expand();
 tg.setHeaderColor('#0d1117');
 tg.setBackgroundColor('#0d1117');
+const firstName = tg.initDataUnsafe?.user?.first_name || 'Ученик';
 
-// ── Пользователь ──
-const user = tg.initDataUnsafe?.user;
-const firstName = user?.first_name || 'Ученик';
-document.getElementById('userBadge').textContent = firstName;
+/* ════ LOADER ════ */
+const STEPS = [
+    {pct:15,  text:'Подключаемся к серверу'},
+    {pct:35,  text:'Загружаем расписание'},
+    {pct:55,  text:'Синхронизируем базу ОГЭ'},
+    {pct:75,  text:'Считаем дни до экзаменов'},
+    {pct:90,  text:'Почти готово'},
+    {pct:100, text:'Добро пожаловать'},
+];
+const loaderFill   = document.getElementById('loaderFill');
+const loaderStatus = document.getElementById('loaderStatus');
 
-// ── Табы ──
+function runLoader() {
+    let i = 0;
+    const tick = () => {
+        if (i >= STEPS.length) {
+            setTimeout(() => {
+                document.getElementById('loader').classList.add('hidden');
+                const app = document.getElementById('app');
+                app.classList.add('visible');
+                document.getElementById('userBadge').textContent = firstName;
+            }, 350);
+            return;
+        }
+        const s = STEPS[i++];
+        loaderFill.style.width = s.pct + '%';
+        loaderStatus.innerHTML = `<span class="loader-dots">${s.text}</span>`;
+        setTimeout(tick, i === STEPS.length ? 280 : 370 + Math.random() * 180);
+    };
+    setTimeout(tick, 250);
+}
+runLoader();
+
+/* ════ ТАБЫ ════ */
 function switchTab(name) {
-    document.querySelectorAll('.tab').forEach((t, i) => {
-        const pages = ['schedule','oge','timer','facts'];
-        t.classList.toggle('active', pages[i] === name);
-    });
-    document.querySelectorAll('.page').forEach(p => {
-        p.classList.toggle('active', p.id === `page-${name}`);
-    });
+    const order = ['schedule','oge','timer','facts'];
+    document.querySelectorAll('.tab').forEach((t,i) =>
+        t.classList.toggle('active', order[i] === name));
+    document.querySelectorAll('.page').forEach(p =>
+        p.classList.toggle('active', p.id === `page-${name}`));
 }
 
-// ── Расписание ──
-const SCHEDULE = {
-    1: [ // Пн
-        {n:1, name:'Математика',        room:'304', time:'08:00–08:40'},
-        {n:2, name:'Русский язык',       room:'201', time:'08:50–09:30'},
-        {n:3, name:'История',            room:'115', time:'09:45–10:25'},
-        {n:4, name:'Физкультура',        room:'Зал', time:'10:45–11:25'},
-        {n:5, name:'Английский язык',    room:'207', time:'11:40–12:20'},
-        {n:6, name:'Обществознание',     room:'112', time:'12:30–13:10'},
-    ],
-    2: [
-        {n:1, name:'Физика',             room:'308', time:'08:00–08:40'},
-        {n:2, name:'Геометрия',          room:'304', time:'08:50–09:30'},
-        {n:3, name:'Биология',           room:'220', time:'09:45–10:25'},
-        {n:4, name:'Химия',              room:'310', time:'10:45–11:25'},
-        {n:5, name:'Информатика',        room:'Каб.', time:'11:40–12:20'},
-    ],
-    3: [
-        {n:1, name:'Русский язык',       room:'201', time:'08:00–08:40'},
-        {n:2, name:'Литература',         room:'118', time:'08:50–09:30'},
-        {n:3, name:'Математика',         room:'304', time:'09:45–10:25'},
-        {n:4, name:'География',          room:'114', time:'10:45–11:25'},
-        {n:5, name:'Английский язык',    room:'207', time:'11:40–12:20'},
-        {n:6, name:'Физкультура',        room:'Зал', time:'12:30–13:10'},
-    ],
-    4: [
-        {n:1, name:'Алгебра',            room:'304', time:'08:00–08:40'},
-        {n:2, name:'Физика',             room:'308', time:'08:50–09:30'},
-        {n:3, name:'История',            room:'115', time:'09:45–10:25'},
-        {n:4, name:'Обществознание',     room:'112', time:'10:45–11:25'},
-        {n:5, name:'Химия',              room:'310', time:'11:40–12:20'},
-    ],
-    5: [
-        {n:1, name:'Биология',           room:'220', time:'08:00–08:40'},
-        {n:2, name:'Информатика',        room:'Каб.', time:'08:50–09:30'},
-        {n:3, name:'Русский язык',       room:'201', time:'09:45–10:25'},
-        {n:4, name:'Математика',         room:'304', time:'10:45–11:25'},
-        {n:5, name:'Английский язык',    room:'207', time:'11:40–12:20'},
-    ],
+/* ════ РАСПИСАНИЕ ════ */
+const SCHED = {
+    1:[{n:1,name:'Математика',room:'304',time:'08:00–08:40'},{n:2,name:'Русский язык',room:'201',time:'08:50–09:30'},{n:3,name:'История',room:'115',time:'09:45–10:25'},{n:4,name:'Физкультура',room:'Зал',time:'10:45–11:25'},{n:5,name:'Английский язык',room:'207',time:'11:40–12:20'},{n:6,name:'Обществознание',room:'112',time:'12:30–13:10'}],
+    2:[{n:1,name:'Физика',room:'308',time:'08:00–08:40'},{n:2,name:'Геометрия',room:'304',time:'08:50–09:30'},{n:3,name:'Биология',room:'220',time:'09:45–10:25'},{n:4,name:'Химия',room:'310',time:'10:45–11:25'},{n:5,name:'Информатика',room:'Каб',time:'11:40–12:20'}],
+    3:[{n:1,name:'Русский язык',room:'201',time:'08:00–08:40'},{n:2,name:'Литература',room:'118',time:'08:50–09:30'},{n:3,name:'Математика',room:'304',time:'09:45–10:25'},{n:4,name:'География',room:'114',time:'10:45–11:25'},{n:5,name:'Английский язык',room:'207',time:'11:40–12:20'},{n:6,name:'Физкультура',room:'Зал',time:'12:30–13:10'}],
+    4:[{n:1,name:'Алгебра',room:'304',time:'08:00–08:40'},{n:2,name:'Физика',room:'308',time:'08:50–09:30'},{n:3,name:'История',room:'115',time:'09:45–10:25'},{n:4,name:'Обществознание',room:'112',time:'10:45–11:25'},{n:5,name:'Химия',room:'310',time:'11:40–12:20'}],
+    5:[{n:1,name:'Биология',room:'220',time:'08:00–08:40'},{n:2,name:'Информатика',room:'Каб',time:'08:50–09:30'},{n:3,name:'Русский язык',room:'201',time:'09:45–10:25'},{n:4,name:'Математика',room:'304',time:'10:45–11:25'},{n:5,name:'Английский язык',room:'207',time:'11:40–12:20'}],
 };
-
-const DAY_NAMES = ['','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'];
-
-function getCurrentLesson(lessons) {
-    const now = new Date();
-    const hm = now.getHours() * 60 + now.getMinutes();
-    for (const l of lessons) {
-        const [start, end] = l.time.split('–');
-        const toMin = s => { const [h,m] = s.split(':').map(Number); return h*60+m; };
-        if (hm >= toMin(start) && hm <= toMin(end)) return l.n;
-    }
+const DAYS=['','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'];
+function currentLesson(ls){
+    const hm=new Date().getHours()*60+new Date().getMinutes();
+    const t=s=>{const[h,m]=s.split(':').map(Number);return h*60+m};
+    for(const l of ls){const[s,e]=l.time.split('–');if(hm>=t(s)&&hm<=t(e))return l.n}
     return null;
 }
-
-function renderSchedule() {
-    const today = new Date();
-    let dow = today.getDay(); // 0=вс
-    if (dow === 0) dow = 7;
-    const lessons = SCHEDULE[dow] || SCHEDULE[1];
-    const current = getCurrentLesson(lessons);
-
-    document.getElementById('todayLabel').textContent =
-        `Сегодня, ${DAY_NAMES[dow]}`;
-
-    const container = document.getElementById('lessonsContainer');
-    container.innerHTML = lessons.map(l => `
-        <div class="lesson ${l.n === current ? 'current' : ''}">
+(function renderSchedule(){
+    let dow=new Date().getDay();if(dow===0)dow=7;
+    const ls=SCHED[dow]||SCHED[1], cur=currentLesson(ls);
+    document.getElementById('todayLabel').textContent=`Сегодня, ${DAYS[dow]}`;
+    document.getElementById('lessonsContainer').innerHTML=ls.map(l=>`
+        <div class="lesson${l.n===cur?' current':''}">
             <div class="lesson-num">${l.n}</div>
             <div class="lesson-info">
-                <div class="lesson-name">${l.name} ${l.n === current ? '<span class="badge badge-green">Сейчас</span>' : ''}</div>
+                <div class="lesson-name">${l.name}${l.n===cur?' <span class="badge badge-green">Сейчас</span>':''}</div>
                 <div class="lesson-meta">${l.time} · каб. ${l.room}</div>
             </div>
-        </div>
-    `).join('');
-}
-renderSchedule();
+        </div>`).join('');
+})();
 
-// ── Таймер ──
-const EXAMS = [
-    {subj:'🇬🇧 Английский (устная)',   date: new Date('2026-05-20T08:00:00')},
-    {subj:'✍️ Русский язык',            date: new Date('2026-05-27T08:00:00')},
-    {subj:'📐 Математика',              date: new Date('2026-06-03T08:00:00')},
-    {subj:'⚛️ Физика',                  date: new Date('2026-06-05T08:00:00')},
-    {subj:'📜 История',                 date: new Date('2026-06-07T08:00:00')},
-    {subj:'🌍 Обществознание',          date: new Date('2026-06-09T08:00:00')},
-    {subj:'🧬 Биология',               date: new Date('2026-06-11T08:00:00')},
-    {subj:'💻 Информатика',             date: new Date('2026-06-15T08:00:00')},
+/* ════ ТАЙМЕР ════ */
+const EXAMS=[
+    {subj:'🇬🇧 Английский (устная)',date:new Date('2026-05-20T08:00:00')},
+    {subj:'✍️ Русский язык',         date:new Date('2026-05-27T08:00:00')},
+    {subj:'📐 Математика',           date:new Date('2026-06-03T08:00:00')},
+    {subj:'⚛️ Физика',               date:new Date('2026-06-05T08:00:00')},
+    {subj:'📜 История',              date:new Date('2026-06-07T08:00:00')},
+    {subj:'🌍 Обществознание',       date:new Date('2026-06-09T08:00:00')},
+    {subj:'🧬 Биология',             date:new Date('2026-06-11T08:00:00')},
+    {subj:'💻 Информатика',          date:new Date('2026-06-15T08:00:00')},
 ];
-
-const nearestExam = EXAMS.reduce((a, b) =>
-    Math.abs(a.date - Date.now()) < Math.abs(b.date - Date.now()) ? a : b
-);
-
-function pad(n) { return String(n).padStart(2, '0'); }
-
-function updateTimer() {
-    const diff = nearestExam.date - Date.now();
-    if (diff <= 0) {
-        ['tDays','tHours','tMins','tSecs'].forEach(id => document.getElementById(id).textContent = '00');
-        return;
-    }
-    const days  = Math.floor(diff / 86400000);
-    const hours = Math.floor((diff % 86400000) / 3600000);
-    const mins  = Math.floor((diff % 3600000) / 60000);
-    const secs  = Math.floor((diff % 60000) / 1000);
-    document.getElementById('tDays').textContent  = pad(days);
-    document.getElementById('tHours').textContent = pad(hours);
-    document.getElementById('tMins').textContent  = pad(mins);
-    document.getElementById('tSecs').textContent  = pad(secs);
+const nearest=EXAMS.reduce((a,b)=>Math.abs(a.date-Date.now())<Math.abs(b.date-Date.now())?a:b);
+const pad=n=>String(n).padStart(2,'0');
+function updateTimer(){
+    const d=nearest.date-Date.now();
+    if(d<=0){['tDays','tHours','tMins','tSecs'].forEach(id=>document.getElementById(id).textContent='00');return;}
+    document.getElementById('tDays').textContent =pad(Math.floor(d/86400000));
+    document.getElementById('tHours').textContent=pad(Math.floor(d%86400000/3600000));
+    document.getElementById('tMins').textContent =pad(Math.floor(d%3600000/60000));
+    document.getElementById('tSecs').textContent =pad(Math.floor(d%60000/1000));
 }
-setInterval(updateTimer, 1000);
-updateTimer();
+setInterval(updateTimer,1000);updateTimer();
 
-// Прогресс-бары (локальные заглушки, можно связать с ботом)
-const PROGRESS = [
-    {subj:'📐 Математика',     pct: 42},
-    {subj:'✍️ Русский язык',   pct: 65},
-    {subj:'🌍 Обществознание', pct: 28},
-    {subj:'🇬🇧 Английский',   pct: 55},
-    {subj:'⚛️ Физика',         pct: 20},
+const PROGRESS=[
+    {subj:'📐 Математика',pct:42},{subj:'✍️ Русский язык',pct:65},
+    {subj:'🌍 Обществознание',pct:28},{subj:'🇬🇧 Английский',pct:55},{subj:'⚛️ Физика',pct:20},
 ];
+document.getElementById('progressCards').innerHTML=
+    PROGRESS.map(p=>`<div style="padding:8px 0;border-bottom:1px solid var(--border)">
+        <div class="progress-label"><span>${p.subj}</span><span style="color:var(--green);font-weight:700">${p.pct}%</span></div>
+        <div class="progress-track"><div class="progress-fill" style="width:${p.pct}%"></div></div>
+    </div>`).join('')+`<div style="padding-top:8px;font-size:11px;color:var(--muted)">Прогресс обновляется по мере прохождения тестов в боте</div>`;
 
-document.getElementById('progressCards').innerHTML = PROGRESS.map(p => `
-    <div style="padding: 8px 0; border-bottom: 1px solid var(--border);">
-        <div class="progress-label">
-            <span>${p.subj}</span>
-            <span style="color: var(--green); font-weight: 700;">${p.pct}%</span>
-        </div>
-        <div class="progress-track">
-            <div class="progress-fill" style="width: ${p.pct}%"></div>
-        </div>
-    </div>
-`).join('') + `<div style="padding-top:8px; font-size:11px; color:var(--muted);">
-    Прогресс обновляется по мере прохождения тестов в боте
-</div>`;
-
-// Экзамены на вкладке ОГЭ
-document.getElementById('examsList').innerHTML = EXAMS.slice(0, 4).map(e => {
-    const diff = Math.ceil((e.date - Date.now()) / 86400000);
-    const badge = diff <= 14
-        ? `<span class="badge badge-red">${diff} дн.</span>`
-        : `<span class="badge badge-green">${diff} дн.</span>`;
-    return `<div class="card" style="margin-bottom:8px;">
-        <div class="card-row">
-            <div class="card-title">${e.subj}</div>
-            ${badge}
-        </div>
+document.getElementById('examsList').innerHTML=EXAMS.slice(0,4).map(e=>{
+    const d=Math.ceil((e.date-Date.now())/86400000);
+    return`<div class="card" style="margin-bottom:8px">
+        <div class="card-row"><div class="card-title">${e.subj}</div>
+        <span class="badge ${d<=14?'badge-red':'badge-green'}">${d} дн.</span></div>
         <div class="card-body">${e.date.toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}</div>
     </div>`;
 }).join('');
 
-// ── Факты ──
-const FACTS = [
-    {subj:'📐 Математика',     text:'Дискриминант D = b²−4ac. D > 0 → два корня; D = 0 → один корень; D < 0 → нет вещественных корней.'},
-    {subj:'✍️ Русский язык',   text:'Краткие прилагательные в предложении — именная часть составного сказуемого, а не определение.'},
-    {subj:'🌍 Обществознание', text:'Социальная мобильность: вертикальная — изменение статуса, горизонтальная — смена роли без изменения статуса.'},
-    {subj:'📜 История',        text:'Крепостное право в России отменено Александром II в 1861 году — Манифестом об освобождении крестьян.'},
-    {subj:'⚛️ Физика',         text:'Закон Ома: I = U/R. Сила тока прямо пропорциональна напряжению и обратно пропорциональна сопротивлению.'},
-    {subj:'🧬 Биология',       text:'Фотосинтез: 6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂. Хлорофилл поглощает красный и синий свет.'},
-    {subj:'🇬🇧 Английский',   text:'Present Perfect vs Past Simple: есть конкретное время (yesterday) → Past Simple; нет → Present Perfect.'},
-    {subj:'💻 Информатика',    text:'В двоичной системе счисления число 2^n определяет количество значений, закодированных n битами.'},
+/* ════ ФАКТЫ ════ */
+const FACTS=[
+    {subj:'📐 Математика',    text:'Дискриминант D = b²−4ac. D > 0 → два корня; D = 0 → один; D < 0 → нет вещественных корней.'},
+    {subj:'✍️ Русский язык',  text:'Краткие прилагательные в предложении — именная часть сказуемого, а не определение.'},
+    {subj:'🌍 Обществознание',text:'Социальная мобильность: вертикальная — изменение статуса, горизонтальная — смена роли без его изменения.'},
+    {subj:'📜 История',       text:'Крепостное право отменено Александром II в 1861 году — Манифестом об освобождении крестьян.'},
+    {subj:'⚛️ Физика',        text:'Закон Ома: I = U/R. Сила тока прямо пропорциональна напряжению и обратно — сопротивлению.'},
+    {subj:'🧬 Биология',      text:'Фотосинтез: 6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂. Хлорофилл поглощает красный и синий свет.'},
+    {subj:'🇬🇧 Английский',  text:'Present Perfect vs Past Simple: конкретное время → Past Simple; без времени → Present Perfect.'},
+    {subj:'💻 Информатика',   text:'2^n — количество значений, закодированных n битами. Байт (8 бит) = 256 значений.'},
 ];
-
-let factIdx = 0;
-
-function showNextFact() {
-    factIdx = (factIdx + 1) % FACTS.length;
-    const f = FACTS[factIdx];
-    document.querySelector('#factDisplay .fact-subject').textContent = f.subj;
-    document.querySelector('#factDisplay .fact-text').textContent    = f.text;
+let fi=0;
+function showNextFact(){
+    fi=(fi+1)%FACTS.length;
+    document.querySelector('#factDisplay .fact-subject').textContent=FACTS[fi].subj;
+    document.querySelector('#factDisplay .fact-text').textContent   =FACTS[fi].text;
 }
-// Сразу показываем первый
-(function() {
-    const f = FACTS[0];
-    document.querySelector('#factDisplay .fact-subject').textContent = f.subj;
-    document.querySelector('#factDisplay .fact-text').textContent    = f.text;
-})();
+document.querySelector('#factDisplay .fact-subject').textContent=FACTS[0].subj;
+document.querySelector('#factDisplay .fact-text').textContent   =FACTS[0].text;
 </script>
 </body>
 </html>
